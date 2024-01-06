@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="autoKM aplikacija za izračun prijeđene kilometraže vozilom.">
+  	<meta name="author" content="Sinisa Kovacic">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>autoKM</title>
+
+	<style type="text/css">
+		:root {
+		  --main-bg-color: #555b6e;
+		  --main-text-color: #bee3db;
+		  --input-bg-color: #89b0ae;
+		  --input-text-color: #000;
+		  --input-border-color: #a8dadc;
+		}
+		* {
+			font-family: Verdana;
+			font-size: 8pt;
+		}
+		body {
+			background-color: var(--main-bg-color);
+			color: var(--main-text-color);
+		}
+		table {
+			width: 100%;
+			text-align: left;
+			margin-top: 20px;
+		}
+		table td {
+			padding: 4px;
+		}
+		input[type=number] {
+			width: calc(100% - 6px);
+			border: 1px solid var(--input-border-color);
+			padding: 4px;
+			outline: none;
+
+			background-color: var(--input-bg-color);
+			color: var(--input-text-color);
+		}
+		.rowColor {
+			background-color: var(--input-bg-color);
+			color: var(--input-text-color);
+		}
+		.numRow {
+			border-right: 2px solid var(--main-bg-color);
+			padding: 0 5px;
+		}
+		button {
+			margin-top: 20px;
+			padding: 10px 45px;
+			outline: none;
+			border: 1px solid var(--input-border-color);
+
+			background-color: var(--input-bg-color);
+			color: var(--input-text-color);
+		}
+		select {
+			width: 80px;
+			outline: none;
+			padding: 4px;
+
+			background-color: var(--input-bg-color);
+			color: var(--input-text-color);
+			border: 1px solid var(--input-border-color);
+		}
+	</style>
+</head>
+<body>
+
+	<label for="rowCnt">Broj polja:</label>
+	<select id="rowCnt" onchange="createTable(value);">
+		<option value="1">1</option>
+		<option value="2">2</option>
+		<option value="3">3</option>
+		<option value="4">4</option>
+		<option value="5">5</option>
+		<option value="6">6</option>
+		<option value="7">7</option>
+		<option value="8">8</option>
+		<option value="9">9</option>
+		<option value="10">10</option>
+	</select>
+
+	<div id="table"></div>
+
+	<div style="text-align: center;">
+		<button type="button" onclick="calc();">Izračun</button>
+	</div>
+	
+	<table>
+		<tr>
+			<td>Ukupno km:</td>
+			<td>Vrijeme korištenja:</td>
+			<td>Ukupno čekanja:</td>
+			<td>Ukupno vožnje:</td>
+		</tr>
+		<tr>
+			<td id="total_km">0</td>
+			<td id="total_time">0</td>
+			<td id="total_hold">0</td>
+			<td id="total_run">0</td>
+		</tr>
+	</table>
+
+	<script type="text/javascript">
+
+		// Inicijalizacija tablice s jednim poljem unosa.
+		createTable(1);
+
+		/**
+		 * Creates a table.
+		 */
+		function createTable(value)
+		{
+			//console.log('value: ' + value);
+			value++;
+
+			var docTable = document.getElementById('table');
+			docTable.innerHTML = '';
+
+			var table = '<table cellspacing=0 cellpadding=0><tr><td></td><td></td><td>Kilometri</td><td>Ukupno KM</td><td>Vrijeme</td><td>Čekanje</td><td>Uk. čekanje</td></tr>';
+
+			for (var i = 1; i < value; i++) {
+
+				var rowColor = '<tr>';
+				if (i % 2) {
+					rowColor = '<tr class=rowColor>';
+				}
+
+				// Posljednji red nema polja unosa vremena čekanja.
+				var isType = 'number';
+				if (i == (value - 1)) {
+					isType = 'hidden';
+				}
+				
+				// Polazak
+				table += rowColor + '<td rowspan=2 class=numRow>'+ i +'</td><td>Polazak</td><td><input type=number onkeypress=limitChr(this,7); id=polazak_km_'+ i +'></td><td></td><td><input type=number onkeypress=limitChr(this,4); id=polazak_vrijeme_'+ i +'></td><td></td><td></td></tr>';
+
+				// Dolazak
+				table += rowColor + '<td>Dolazak</td><td><input type=number onkeypress=limitChr(this,7); id=dolazak_km_'+ i +'></td><td id=ukupno_km_'+ i +'></td><td><input type=number onkeypress=limitChr(this,4); id=dolazak_vrijeme_'+ i +'></td><td><input type='+ isType +' onkeypress=limitChr(this,4); id=cekanje_vrijeme_'+ i +'></td><td id=cekanje_'+ i +'></td></tr>';
+			}
+
+			table += '</table>';
+
+			docTable.innerHTML = table;
+		}
+
+
+		/**
+		 * Razlika između dva vremena.
+		 *
+		 * @param      {(number|string)}  time1   The time 1
+		 * @param      {(number|string)}  time2   The time 2
+		 * @return     {string}           razliku u vremenima
+		 * @usage		timeDiff(10:00, 11:20);
+		 */
+		function timeDiff(time1, time2)
+		{
+			//var date1 = new Date("08/05/2015 10:00:00");
+			//var date2 = new Date("08/05/2015 11:00:00");
+
+			var date1 = new Date('01/01/2000 ' + time1 + ':00');
+			var date2 = new Date('01/01/2000 ' + time2 + ':00');
+
+			// Provjera dali je prošla ponoć.
+			if (time2 < time1) {
+				date2 = new Date('01/02/2000 ' + time2 + ':00');
+			}
+
+			var diff = date2.getTime() - date1.getTime();
+			var msec = diff;
+			
+			var hours = Math.floor(msec / 1000 / 60 / 60);
+			msec -= hours * 1000 * 60 * 60;
+
+			var minutes = Math.floor(msec / 1000 / 60);
+			msec -= minutes * 1000 * 60;
+			
+			//var ss = Math.floor(msec / 1000);
+			//msec -= ss * 1000;
+
+			var output_h = hours.toString();
+			var output_m = minutes.toString();
+
+			if (output_h.length < 2) {
+				hours = '0' + hours;
+			}
+			if (output_m.length < 2) {
+				minutes = '0' + minutes;
+			}
+
+			return hours + ":" + minutes;
+		}
+
+
+		/**
+		 * Format time function, input as hole number output as hour:minutes.
+		 *
+		 * @param      {string}  time    The time
+		 * @return     {string}  hourminutes to hour:minutes
+		 */
+		function timeInput(time)
+		{
+			var output = time.substr(0, 2) + ':' + time.substr(2);
+			//console.log('f(timeInput) => ' + time + ' to ' + output);
+			
+			return output;
+		}
+
+
+		/**
+		 * Zbraja vremena
+		 *
+		 * @param      {string}  The time
+		 * @return     {string}  Ukupan zbroj vremena
+		 */
+		function sumTime(time)
+		{
+			var total = 0;
+
+			for(var i = 0; i < time.length; i++){
+			  const aSlice = time[i].split(':');
+			  const aSeconds = (+aSlice[0]) * 60 * 60 + (+aSlice[1]) * 60;
+			  total += aSeconds
+			}
+
+			var hours = ((total - total % 3600) / 3600) % 60;
+			var minutes = ((total - total % 60) / 60) % 60;
+
+			var output_h = hours.toString();
+			var output_m = minutes.toString();
+
+			if (output_h.length < 2) {
+				hours = '0' + hours;
+			}
+			if (output_m.length < 2) {
+				minutes = '0' + minutes;
+			}
+
+			return hours + ':' + minutes;
+		}
+
+
+		/**
+		 * Izračun
+		 */
+		function calc()
+		{
+			var rowCnt = document.getElementById('rowCnt').value;
+			//console.log(rowCnt);
+
+			var total_km = 0; var total_time = 0; var time_hold = new Array();
+			
+			for (var i = 1; i <= rowCnt; i++) {
+	
+				// Kilometraža između svakog polaska i dolaska.
+				document.getElementById('ukupno_km_' + i).innerHTML = document.getElementById('dolazak_km_' + i).value - document.getElementById('polazak_km_' + i).value;
+
+				// Vrijeme čekanja.
+				if (document.getElementById('cekanje_vrijeme_' + i).value.length > 0) {
+					document.getElementById('cekanje_' + i).innerHTML = timeDiff(timeInput(document.getElementById('dolazak_vrijeme_' + i).value), timeInput(document.getElementById('cekanje_vrijeme_' + i).value));
+				}
+
+				// Ukupna kilometraža.
+				total_km = document.getElementById('dolazak_km_' + i).value - document.getElementById('polazak_km_1').value;
+
+				// Vrijeme korištenja.
+				total_time = timeDiff(timeInput(document.getElementById('polazak_vrijeme_1').value), timeInput(document.getElementById('dolazak_vrijeme_' + i).value));
+				console.log('total time: ' + total_time);
+
+				// Ukupno čekanje.
+				// Stavlja vremena u array.
+				if (document.getElementById('cekanje_vrijeme_' + i).value.length > 0) {
+					time_hold.push(document.getElementById('cekanje_' + i).innerHTML);
+				}
+
+			}
+
+			// Sumira vremena čekanja.
+			total_hold = sumTime(time_hold);
+
+			// Output: Ukupna prijeđena kilometraža
+			document.getElementById('total_km').innerHTML = total_km;
+			// Output: Ukupno vrijeme korištenja.
+			document.getElementById('total_time').innerHTML = total_time;
+			// Output: Ukupno čekanja.
+			document.getElementById('total_hold').innerHTML = total_hold;
+			// Output: Ukupno vožnje.
+			document.getElementById('total_run').innerHTML = timeDiff(total_hold, total_time);
+		}
+
+
+		/**
+		 * Ograničava unos znamenaka od strane korisnika.
+		 *
+		 */
+		function limitChr(element, max_chr) {
+			max_chr--;
+
+			if (element.value.length > max_chr) {
+				element.value = element.value.substr(0, max_chr);
+			}
+		}
+
+	</script>
+
+</body>
+</html>

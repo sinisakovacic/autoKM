@@ -1,0 +1,55 @@
+<script type="text/javascript">
+
+/**
+ * Razlika između dva vremena.
+ *
+ * @param      {(number|string)}  time1   The time 1
+ * @param      {(number|string)}  time2   The time 2
+ * @return     {string}           razliku u vremenima
+ * @usage		timeDiff(10:00, 11:20);
+ */
+function timeDiff(time1, time2)
+{
+	//var date1 = new Date("08/05/2015 10:00:00");
+	//var date2 = new Date("08/05/2015 11:00:00");
+
+	var date1 = new Date('01/01/2000 ' + time1 + ':00');
+	var date2 = new Date('01/01/2000 ' + time2 + ':00');
+
+	// Provjera dali je prošla ponoć.
+	if (time2 < time1) {
+		date2 = new Date('01/02/2000 ' + time2 + ':00');
+	}
+
+	var diff = date2.getTime() - date1.getTime();
+	var msec = diff;
+	
+	var hh = Math.floor(msec / 1000 / 60 / 60);
+	msec -= hh * 1000 * 60 * 60;
+
+	var mm = Math.floor(msec / 1000 / 60);
+	msec -= mm * 1000 * 60;
+	
+	//var ss = Math.floor(msec / 1000);
+	//msec -= ss * 1000;
+
+	return hh + ":" + mm;
+}
+
+/**
+ * Format time function, input as hole number output as hour:minutes.
+ *
+ * @param      {string}  time    The time
+ * @return     {string}  hourminutes to hour:minutes
+ */
+function timeInput(time)
+{
+	var output = time.substr(0, 2) + ':' + time.substr(2);
+	console.log('f(timeInput) => ' + time + ' to ' + output);
+	
+	return output;
+}
+
+console.log('f(timeDiff) => ' + timeDiff(timeInput('2300'), timeInput('0010')));
+	
+</script>

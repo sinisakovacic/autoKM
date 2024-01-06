@@ -1,0 +1,22 @@
+<script type="text/javascript">
+	
+
+function sumTime(time)
+{
+	var total = 0;
+
+	for(var i = 0; i < time.length; i++){
+	  const aSlice = time[i].split(':');
+	  const aSeconds = (+aSlice[0]) * 60 * 60 + (+aSlice[1]) * 60;
+	  total += aSeconds
+	}
+
+	var hours = ((total - total % 3600) / 3600) % 60;
+	var minutes = ((total - total % 60) / 60) % 60;
+
+	return hours + ':' + minutes;
+}
+
+console.log(sumTime(['30:10', '01:30']));
+
+</script>
